@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import shutil
 
 from pathlib import Path
 
@@ -42,9 +43,36 @@ def log_envs(envs):
 
 
 def radarr(src, dest, title):
-    # Check if src has any SRT files
-    # Import them (all?)
-    pass
+    src = Path(src)
+    dest = Path(dest)
+    title = Path(title)
+
+    # Get all SRTs
+    to_import = []
+    failed = []
+    for parent, _, files in os.walk(src):
+        parent = Path(parent)
+        for file in files:
+            file = Path(file)
+
+            if file.suffix == '.srt':
+                # Only copy files identified as english
+                if 'eng' in file.stem.lower() :
+                    to_import.append(parent / file)
+                else:
+                    failed += [file.name]
+
+    # Copy each SRT to the destination folder
+    imported = []
+    for n, file in enumerate(to_import):
+        new_file = Path(dest / f'{title.stem}.eng.{n+1}.srt')
+        shutil.copy(file, new_file)
+        imported += [(file.name, new_file.name)]
+
+    # log which are imported
+    SRTs = {'failed': failed, 'imported': imported}
+    with open(SCRIPT_PATH.parent / f'../logs/srts/{NOW}', 'w') as f:
+        f.write(json.dumps(SRTs, indent=4, sort_keys=True))
 
 
 if __name__ == "__main__":
