@@ -1,10 +1,12 @@
+import datetime
+import json
 import os
 
-def main():
-    SCRIPT_PATH = os.path.realpath(__file__)
-    SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
-    ENV_FILE = f"{SCRIPT_DIR}\\ARR_ENV.txt"
+SCRIPT_PATH = os.path.realpath(__file__)
+SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
+ENV_FILE = f'{SCRIPT_DIR}\\ARR_ENV.txt'
 
+def main():
     envs = {}
 
     # Checking all potentiall environment variables
@@ -18,13 +20,17 @@ def main():
         # Either the script was run manually as a test (ie Not ran by *arr)
         #  or, something went wrong : )
         if len(envs) == 0:
+            envs = {'Custom': 'Test'}
+            log(envs)
             raise Exception('No *arr Environment variables were found.')
 
-    # envs is now a dictionary containing any *arr variables found
-    # Call your own script here, or do what you want with the environment variables found
-    # Information on what these variables could be can be found at:
-    # https://github.com/Radarr/Radarr/wiki/Custom-Post-Processing-Scripts
-    # https://github.com/Sonarr/Sonarr/wiki/Custom-Post-Processing-Scripts
+    log(envs)
+
+
+def log(envs):
+    with open(f'{SCRIPT_DIR}\\logs\\{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")}', 'w') as f:
+        f.write(json.dumps(envs))
+
 
 if __name__ == "__main__":
     main()
