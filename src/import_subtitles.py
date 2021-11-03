@@ -28,7 +28,7 @@ def main():
 
 
 def log(envs):
-    with open(f'{SCRIPT_DIR}\\logs\\{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")}', 'w') as f:
+    with open(f'{SCRIPT_DIR}\\..\\logs\\{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")}', 'w') as f:
         f.write(json.dumps(envs))
 
 
