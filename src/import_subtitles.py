@@ -8,6 +8,7 @@ from pathlib import Path
 SCRIPT_PATH = Path(__file__)
 ENV_FILE = Path(SCRIPT_PATH.parent / 'ARR_ENV.txt')
 NOW = datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')
+log = {}
 
 def main():
     envs = {}
@@ -23,23 +24,22 @@ def main():
         # Either the script was run manually as a test (ie Not ran by *arr)
         #  or, something went wrong : )
         if len(envs) == 0:
-            envs = {'Custom': 'Test'}
-            log_envs(envs)
             raise Exception('No *arr Environment variables were found.')
 
-    log_envs(envs)
+    log['envs'] = envs
 
     if 'RADARR_EVENTTYPE' in envs:
+        movie = ''
+
         if len(envs) > 1: # Not a Test
-            radarr(envs['RADARR_MOVIEFILE_SOURCEFOLDER'],
+            log['srts'] =  radarr(envs['RADARR_MOVIEFILE_SOURCEFOLDER'],
                 envs['RADARR_MOVIE_PATH'],
                 envs['RADARR_MOVIEFILE_RELATIVEPATH']
             )
+            movie = ' ' + envs['RADARR_MOVIE_TITLE']
 
-
-def log_envs(envs):
-    with open(SCRIPT_PATH.parent / f'../logs/envs/{NOW}', 'w') as f:
-        f.write(json.dumps(envs, indent=4, sort_keys=True))
+        with open(SCRIPT_PATH.parent / f'../logs/{NOW} {envs["RADARR_EVENTTYPE"]}{movie}', 'w') as f:
+            f.write(json.dumps(log, indent=4, sort_keys=True))
 
 
 def radarr(src, dest, title):
@@ -70,9 +70,7 @@ def radarr(src, dest, title):
         imported += [(file.name, new_file.name)]
 
     # log which are imported
-    SRTs = {'failed': failed, 'imported': imported}
-    with open(SCRIPT_PATH.parent / f'../logs/srts/{NOW}', 'w') as f:
-        f.write(json.dumps(SRTs, indent=4, sort_keys=True))
+    return {'failed': failed, 'imported': imported}
 
 
 if __name__ == "__main__":
