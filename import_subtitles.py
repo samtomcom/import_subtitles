@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import shutil
 
@@ -5,20 +7,18 @@ from pathlib import Path
 
 ENV_FILE = Path(Path(__file__).parent / 'ARR_ENV.txt')
 
-def main():
-    envs = {}
+def main(envs=None):
+    # No environment variables provided for testing, use actual variables
+    if not envs: 
+        # Checking all potentiall environment variables
+        envs = {}
+        with open(ENV_FILE, 'r') as f:
+            for line in f:
+                env = line.rstrip()
+                if env in os.environ:
+                    envs[env] = os.environ[env]
 
-    # Checking all potentiall environment variables
-    with open(ENV_FILE, 'r') as f:
-        for line in f:
-            env = line.rstrip()
-            if env in os.environ:
-                envs[env] = os.environ[env]
-
-    if len(envs) == 0:
-        raise Exception('No *arr environment variables were found')
-
-    if 'RADARR_EVENTTYPE' not in envs:
+    if len(envs) == 0 or 'RADARR_EVENTTYPE' not in envs:
         raise Exception('No Radarr environment variables were found')
 
     # Implies the script was called by Radarr as a Test.

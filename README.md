@@ -1,13 +1,8 @@
 # Import Subtitles
 
-
-
 In order to get \*arr to run a python script, I had to use a batch file to call it.  
 It's possible that on any \*nix based systems you may have to use a shell file in a similar way,
 but I only have \*arr running on Windows so I cannot test that.
-
-## Usage
-
 
 
 ## Requirements
