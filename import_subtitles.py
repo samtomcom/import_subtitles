@@ -5,18 +5,10 @@ import shutil
 
 from pathlib import Path
 
-ENV_FILE = Path(Path(__file__).parent / 'ARR_ENV.txt')
-
 def main(envs=None):
     # No environment variables provided for testing, use actual variables
     if not envs: 
-        # Checking all potentiall environment variables
-        envs = {}
-        with open(ENV_FILE, 'r') as f:
-            for line in f:
-                env = line.rstrip()
-                if env in os.environ:
-                    envs[env] = os.environ[env]
+        envs = _get_envs()
 
     if len(envs) == 0 or 'RADARR_EVENTTYPE' not in envs:
         raise Exception('No Radarr environment variables were found')
@@ -41,7 +33,7 @@ def main(envs=None):
                 pass
 
             # Only copy files identified as english
-            if 'eng' in file.stem.lower() :
+            if 'eng' in file.stem.lower():
                 to_import.append(parent / file)
             else:
                 pass
@@ -50,6 +42,17 @@ def main(envs=None):
     for n, file in enumerate(to_import):
         new_file = Path(dest / f'{title.stem}.eng.{n+1}.srt')
         shutil.copy(file, new_file)
+
+# Checking all potentiall environment variables
+def _get_envs():
+    envs = {}
+    with open(Path(Path(__file__).parent / 'ARR_ENV.txt'), 'r') as f:
+        for line in f:
+            env = line.rstrip()
+            if env in os.environ:
+                envs[env] = os.environ[env]
+
+    return envs
 
 
 if __name__ == "__main__":
