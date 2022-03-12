@@ -2,37 +2,23 @@
 
 import os
 import shutil
+import typing
+from typing import List
 
 from pathlib import Path
 
-# Array of tuples in the form ('Language name', 'ISO 639-2/B', 'ISO 639-1')
+# Array of tuples in the form ('Language name', 'ISO 639-2/B')
 # https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
-LANGS = [('english', 'eng', 'en')]
+LANGS = [('english', 'eng')]
 # For example:
-# LANGS = [('english', 'eng', 'en'),
-#     ('french', 'fre', 'fr'),
-#     ('german', 'ger', 'de')]
+# LANGS = [('english', 'eng'),
+#     ('french', 'fre'),
+#     ('german', 'ger')]
 
-def main(envs=None):
-    # No environment variables provided for testing, use actual variables
-    if not envs: 
-        envs = _get_envs()
-
-    if len(envs) == 0 or 'RADARR_EVENTTYPE' not in envs:
-        raise Exception('No Radarr environment variables were found')
-
-    # Implies the script was called by Radarr as a Test.
-    if len(envs) == 1:
-        return
-
-    src = Path(envs['RADARR_MOVIEFILE_SOURCEFOLDER'])
-    dest = Path(envs['RADARR_MOVIE_PATH'])
-    title = Path(envs['RADARR_MOVIEFILE_RELATIVEPATH']).stem
-
-    # Get all SRTs
-    to_import = []
+def _get_srts(dir: Path) -> List[Path]:
+    """Get all SRT files within a given directory"""
     srts = []
-    for parent, _, files in os.walk(src):
+    for parent, _, files in os.walk(dir):
         parent = Path(parent)
 
         for file in files:
@@ -43,7 +29,8 @@ def main(envs=None):
             # Save srt files here
             srts += [file]
 
-    _process_srts(srts, src, dest, title)
+    return srts
+
 
 # Checking all potentiall environment variables
 def _get_envs():
@@ -57,9 +44,8 @@ def _get_envs():
     return envs
 
 def _process_srts(srts, src, dest, title):
-    lang_count    = {b: 0 for _,b,_ in LANGS} # {'eng': 0, 'fre': 0}
-    lang_names    = {a: b for a,b,_ in LANGS} # {'english': 'eng', 'french': 'fre'}
-    lang_2_letter = {c: b for _,b,c in LANGS} # {'en': 'eng', 'fr': 'fre'}
+    lang_count    = {b: 0 for _,b in LANGS} # {'eng': 0, 'fre': 0}
+    lang_names    = {a: b for a,b in LANGS} # {'english': 'eng', 'french': 'fre'}
 
     # index of SRTs that have been processed, these are skipped once processed
     done = []
@@ -86,21 +72,28 @@ def _process_srts(srts, src, dest, title):
                 done += [n]
                 _copy_file(file, src, dest, title, code, lang_count[code])
 
-    # 2 letter code matches
-    for lang_2, code in lang_2_letter.items():
-        for n, file in enumerate(srts):
-            if n in done:
-                continue
-
-            if lang_2 in file.stem.lower():
-                lang_count[code] += 1
-                done += [n]
-                _copy_file(file, src, dest, title, code, lang_count[code])
-
-
 def _copy_file(file, src, dest, title, code, count):
     new_file = Path(dest / f'{title}.{code}.{count}.srt')
     shutil.copy(src / file, new_file)
+
+def main(envs=None):
+    # No environment variables provided for testing, use actual variables
+    if not envs: 
+        envs = _get_envs()
+
+    if not envs or 'RADARR_EVENTTYPE' not in envs:
+        raise Exception('No Radarr environment variables were found')
+
+    # Implies the script was called by Radarr as a Test.
+    if len(envs) == 1:
+        return
+
+    src = Path(envs['RADARR_MOVIEFILE_SOURCEFOLDER'])
+    dest = Path(envs['RADARR_MOVIE_PATH'])
+    title = Path(envs['RADARR_MOVIEFILE_RELATIVEPATH']).stem
+
+    srts = _get_srts(dir=src)
+    _process_srts(srts, src, dest, title)
 
 
 if __name__ == "__main__":
